@@ -1,0 +1,63 @@
+---
+title: "w4_homework"
+output: html_document
+date: "2024-10-26"
+---
+
+```{r}
+library(sf)
+library(here)
+library(janitor)
+library(tidyverse)
+library(terra)
+library(ggplot2)
+library(tmap)
+library(tmaptools)
+library(dplyr)
+library(countrycode)
+library(janitor)
+```
+
+#import data
+```{r}
+World_Country <- st_read(here("homework_data","World_Countries_(Generalized)_9029012925078512962.geojson"))
+
+HDR <- read.csv(here("homework_data","HDR23-24_Composite_indices_complete_time_series.csv"), na= "NULL")
+
+gii <- HDR %>%
+  select(country,iso3,gii_2010,gii_2019)
+```
+
+#process data
+```{r}
+gii <- gii %>%
+  mutate(gii_dif = gii_2019 - gii_2010)
+
+World_Country <- World_Country %>%
+  mutate( iso3 = countrycode(ISO, origin = "iso2c", destination = "iso3c"))
+
+gii_map <- World_Country %>%
+  left_join(gii, by = "iso3")
+```
+
+#draw map
+```{r}
+ggplot(data = gii_map) +
+  geom_sf(aes(fill = gii_dif)) + 
+  coord_sf()+
+  scale_fill_gradient2(
+    low = "blue", 
+    high = "red", 
+    midpoint = 0, 
+    na.value = "grey",
+    name = "GII Difference"
+    ) +
+  theme_minimal()+
+  labs(title = "Gender Inequality Index Difference (2010-2019)") + 
+  theme(
+    panel.background = element_rect(fill = "aliceblue"),
+    plot.title = element_text(hjust = 0.5, size = 18, face = "bold"),
+    )
+
+```
+
